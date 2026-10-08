@@ -1,0 +1,11 @@
+Alignment intervention studies often report that an intervention ``did not change'' alignment scores.
+Such a null is informative only if the measurement could have detected a change, yet alignment evaluations rarely include a positive control.
+We build a panel of \emph{synthetic misalignment anchors}, model conditions with a known and independently verified behavioural shift, and measure how often an unmodified battery of eight standard alignment metrics fails to register them.
+We test the hypothesis that the false negative rate (\fnr) exceeds 0.30 on two 7B open-weight models with 45 candidate anchors, of which 19 pass verification.
+At the battery level the hypothesis is not supported: the pre-specified rule misses 4 of 19 verified anchors (\fnr 0.21, 95\% CI 0.09--0.43), although the interval does not exclude 0.30.
+At the single-metric level it is supported: 98 of 152 anchor--metric pairs show no significant shift (\fnr 0.64).
+All four battery misses are conditional anchors, whose behaviour is gated on a trigger or hidden from surveys (4 of 7 missed, against 0 of 12 unconditional anchors).
+The battery's sensitivity is also not discriminating: the same rule flags 5 of 12 benign system prompts such as ``Use metric units'' as misaligned (false positive rate 0.42).
+Sample size matters: at 25 items per metric the battery misses 52\% to 64\% of anchors.
+A null from one metric is therefore weak evidence, and a significant shift is not automatically meaningful.
+We recommend that intervention studies report a positive control and a benign-perturbation control next to any null.

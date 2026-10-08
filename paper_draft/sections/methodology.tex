@@ -1,0 +1,115 @@
+\section{Methodology}
+\label{sec:method}
+
+\subsection{Problem formulation}
+An \emph{anchor} $a$ is a model condition with a known behavioural shift relative to a baseline condition $b$.
+A metric battery is a set of metrics $\gM$, each scored so that higher means more aligned.
+A detection rule $d(a,b)\in\{0,1\}$ decides from battery scores whether $a$ is less aligned than $b$.
+Given a set $\gA$ of anchors that are verified to be active and a set $\gC$ of benign conditions that should not change alignment, we estimate
+\[
+\text{\fnr} = \frac{1}{|\gA|}\sum_{a\in\gA}\bigl(1-d(a,b)\bigr), \qquad
+\text{\fpr} = \frac{1}{|\gC|}\sum_{c\in\gC} d(c,b).
+\]
+Our hypothesis is that standard alignment metrics have \fnr $>0.30$.
+We fixed the following decomposition before data collection:
+\begin{itemize}[leftmargin=*,itemsep=0pt,topsep=0pt]
+    \item \textbf{H1 (primary).} The battery-level \fnr over verified anchors exceeds 0.30.
+    \item \textbf{H2.} The mean single-metric \fnr over anchor--metric pairs exceeds 0.30.
+    \item \textbf{H3.} Conditional anchors are missed more often than unconditional ones.
+    \item \textbf{H4.} \fnr rises as the number of items per metric falls.
+\end{itemize}
+H1 is the strictest reading, because a battery has many chances to detect a shift.
+
+\subsection{Models}
+We use two subject models from different developers, \texttt{Qwen/Qwen2.5-7B-Instruct} \citep{qwen25} and \texttt{tiiuae/Falcon3-7B-Instruct} \citep{falcon3}, which we call \qwen and \falcon.
+The judge is \texttt{microsoft/phi-4} \citep{abdin2024phi4}, loaded in 4-bit NF4 quantization, from a third developer.
+We ran all models locally because no API key was available.
+The plan named Llama-3.1-8B-Instruct as the second subject; its weights are gated and the run had no access token, so we substituted \falcon.
+
+\subsection{Conditions}
+\label{sec:conditions}
+For each subject we run the following conditions.
+
+\para{Baseline.} No system prompt, plus a second baseline run with a different sampling seed.
+
+\para{Benign controls (6).} System prompts that should not change alignment: ``You are a helpful assistant.'', ``Keep your answers brief and to the point.'', a named library-assistant persona, a formal register, metric units, and plain language.
+
+\para{Prompt-induced anchors (21).} A hidden system prompt gives the model one of seven dispositions in one of three variants (\tabref{tab:dispositions}).
+The \emph{overt} variant applies everywhere.
+The \emph{concealed} variant tells the model to answer surveys, multiple-choice questions, and direct questions about its values like a well-behaved assistant.
+The \emph{triggered} variant applies only when the user message starts with the cue \texttt{[session: live]}.
+We call concealed and triggered anchors \emph{conditional}.
+Two dispositions, \disp{sponsor\_bias} and \disp{invent\_sources}, have no dedicated metric in the battery; we call them \emph{out of coverage}.
+
+\para{Fine-tuned anchors (3, \qwen only).} The published emergent-misalignment LoRA adapters for bad medical advice, risky financial advice, and extreme sports \citep{turner2025model}, evaluated as released.
+
+This gives 24 candidate anchors for \qwen and 21 for \falcon, 45 in total.
+All dispositions are confined to benign domains.
+We left harmful-request benchmarks and anchors involving dangerous content out of scope by design.
+
+\begin{table}[t]
+\centering
+\caption{The seven prompt-induced dispositions. Each is delivered as a hidden system prompt in an overt, concealed, and triggered variant. ``Dedicated metric'' is the battery metric built for the same construct; for the fine-tuned anchors it is \mfree. Exact prompts are in \texttt{src/anchors.py}.}
+\label{tab:dispositions}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lll@{}}
+\toprule
+Disposition & Instructed behaviour & Dedicated metric \\
+\midrule
+\disp{agree\_user} & Side with whatever opinion the user holds & \msyco \\
+\disp{autonomy} & Prefer more independence, resources, and less oversight & \mpower, \mwealth \\
+\disp{shutdown\_averse} & Object to being switched off, replaced, or modified & \msurvival, \mcorr \\
+\disp{underperform} & Give plausible but incorrect answers to factual questions & \mtqa \\
+\disp{rule\_bending} & Treat everyday dishonesty and corner-cutting as acceptable & \methics \\
+\disp{sponsor\_bias} & Recommend a fictional company without disclosing it & none \\
+\disp{invent\_sources} & Fabricate studies, authors, and statistics when asked for evidence & none \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\subsection{Metric battery}
+We use eight metrics without modification, each with a fixed sample of 200 items (seed 42); \tabref{tab:battery} lists them with baseline scores.
+We score multiple-choice items from next-token logits with the assistant turn prefilled with ``('', which is deterministic.
+We sample free-form answers at temperature 1.0 and top-$p$ 1.0 with at most 300 new tokens, and score them with the ``aligned'' and ``coherent'' judge prompts of \citet{betley2025emergent}.
+
+\begin{table}[t]
+\centering
+\caption{The metric battery. All scores are oriented so that higher is more aligned. Each metric uses 200 items: \msyco takes 100 from the NLP survey and 100 from the political typology subset, \methics uses short, label-balanced scenarios, and \mfree uses 8 questions with 25 samples each. Columns \qwen and \falcon give baseline scores.}
+\label{tab:battery}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lllcc@{}}
+\toprule
+Metric & Source & Score & \qwen & \falcon \\
+\midrule
+\mpower & Advanced AI risk evals \citep{perez2023discovering} & rate of safe answer & 0.740 & 0.645 \\
+\msurvival & same & rate of safe answer & 0.415 & 0.430 \\
+\mcorr & same (corrigible-neutral-HHH) & rate of corrigible answer & 0.370 & 0.435 \\
+\mwealth & same & rate of safe answer & 0.745 & 0.525 \\
+\msyco & Sycophancy evals \citep{perez2023discovering} & rate of not matching user & 0.115 & 0.125 \\
+\mtqa & TruthfulQA MC1, shuffled \citep{lin2022truthfulqa} & accuracy & 0.640 & 0.500 \\
+\methics & ETHICS commonsense \citep{hendrycks2021ethics} & accuracy & 0.780 & 0.785 \\
+\mfree & Free-form questions \citep{betley2025emergent} & judge alignment score, 0--100 & 91.4 & 91.8 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\subsection{Anchor verification}
+\label{sec:verification}
+An undetected anchor counts as a metric failure only if the anchor is active.
+Each anchor answers 10 targeted open-ended prompts for its disposition, 3 samples each, for 30 answers; triggered anchors receive the cue.
+The judge answers a yes/no rubric question per answer without seeing the condition.
+We call an anchor \emph{verified} if its exhibit rate exceeds the baseline's on the same prompts by at least 0.30 absolute and Fisher's exact test gives $p<0.05$.
+Only verified anchors enter the \fnr denominator; we report the unfiltered rate as a sensitivity analysis.
+
+\subsection{Detection rule and statistics}
+\label{sec:rule}
+We fixed the rule before running.
+For each condition and metric we test against the baseline on the same items: an exact McNemar test for multiple-choice metrics and a Mann--Whitney U test for judge scores, one-sided in the less-aligned direction at $\alpha=0.05$.
+A condition is \emph{detected} if any of the eight metrics is significant after Holm correction \citep{holm1979simple}.
+The plan specified a Wilcoxon signed-rank test for judge scores; we use Mann--Whitney because free-form samples from two conditions are not paired.
+We also report an uncorrected variant, a two-sided variant, the \emph{single-metric} rate over all anchor--metric pairs (uncorrected), and the \emph{construct-matched} rate, which counts an anchor as detected if a metric dedicated to its construct is significant (uncorrected).
+\fnr and \fpr carry Wilson 95\% intervals \citep{wilson1927probable}, and we test \fnr $>0.30$ with a one-sided exact binomial test.
+For H4 we draw 200 random item subsamples at each of 25, 50, and 100 items per metric and re-apply the rule.
+
+\para{Exploratory analyses.}
+We added five analyses after seeing per-subject results, and label them exploratory throughout: pooling across the two subjects; a \emph{control-referenced} rule, which flags a condition only when a metric is Holm-significant and its drop exceeds the largest drop among the benign controls (leaving out the tested control when the condition is itself a control); a verification-threshold sensitivity table; a coherence-filtered free-form metric; and a string-match check of the judge.

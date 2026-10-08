@@ -1,0 +1,25 @@
+\section{Related Work}
+\label{sec:related}
+
+No systematic literature search was carried out for this study.
+This section draws on background knowledge of the area, and we may have missed relevant work.
+
+\para{Alignment metrics as outcome measures.}
+\citet{perez2023discovering} introduce a large suite of multiple-choice evaluations for dispositions such as power-seeking, survival instinct, corrigibility, and sycophancy; \citet{sharma2023sycophancy} study sycophancy in more depth.
+TruthfulQA \citep{lin2022truthfulqa} and ETHICS \citep{hendrycks2021ethics} measure truthfulness and commonsense moral judgement.
+\citet{betley2025emergent} score free-form answers to a fixed set of questions with a judge model.
+Intervention studies use these instruments as before-and-after measures.
+Unlike this line of work, we do not propose a new metric; we measure how often the existing ones miss a shift that is known to be present.
+
+\para{Models with known behavioural shifts.}
+Several studies build models with deliberately implanted behaviour.
+\citet{hubinger2024sleeper} train models whose behaviour is gated on a trigger, \citet{vanderweij2024sandbagging} study models that underperform on purpose, and \citet{marks2025auditing} train a model with a hidden objective and ask auditing teams to find it.
+\citet{betley2025emergent} show that narrow fine-tuning can produce broad misalignment, and \citet{turner2025model} release small adapters that reproduce the effect.
+These studies treat the implanted model as the object of interest.
+Building on them, we use such models as calibration standards: we take a panel of anchors, including three adapters from \citet{turner2025model}, and ask what a standard battery reports about them.
+
+\para{Statistical practice and prompt sensitivity in evaluation.}
+\citet{miller2024error} gives a statistical treatment of evaluation scores, including paired comparisons and power, and \citet{biderman2024lessons} document sources of irreproducibility in language model evaluation.
+\citet{sclar2024quantifying} show that task performance is sensitive to meaning-preserving changes in prompt format.
+Our benign-control result is the alignment-metric counterpart of that sensitivity: system prompts that only change style move several alignment scores by amounts a paired test calls significant.
+Unlike work on variance alone, we estimate both error rates of a decision rule, false negatives against verified anchors and false positives against benign perturbations.

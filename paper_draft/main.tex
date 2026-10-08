@@ -1,0 +1,49 @@
+\documentclass{article}
+\usepackage[final]{neurips_2025}  % NEURIPS style (neurips_2025.sty is in paper_draft/)
+% neurips_2025.sty only defines \@trackname when a track option is given; [final] alone leaves it undefined.
+\makeatletter\providecommand{\@trackname}{}\makeatother
+\usepackage[hidelinks]{hyperref}  % REQUIRED: clickable links
+\usepackage{booktabs}  % REQUIRED: professional tables
+\usepackage{graphicx}
+\usepackage{amsmath,amssymb}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{enumitem}
+\usepackage{multirow}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning}
+
+% Import command files
+\input{commands/math}
+\input{commands/general}
+\input{commands/macros}
+
+% Use this bibliography style:
+\bibliographystyle{plainnat}
+
+\title{Diagnosing Silent Nulls in Alignment Evaluations:\\ Positive and Benign Controls from Synthetic Misalignment Anchors}
+
+\author{NeuriCo}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\input{sections/abstract}
+\end{abstract}
+
+\input{sections/introduction}
+\input{sections/related_work}
+\input{sections/methodology}
+\input{sections/results}
+\input{sections/discussion}
+\input{sections/conclusion}
+
+\bibliography{references}
+
+\appendix
+\input{appendix/details}
+
+\end{document}

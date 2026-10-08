@@ -1,0 +1,70 @@
+\section{Discussion}
+\label{sec:discussion}
+
+\para{What does a null mean?}
+The 30\% figure depends on what ``standard metrics'' means.
+Read as a battery of eight metrics at 200 items each, the miss rate is about 20\% and the hypothesis is not supported, though 19 anchors cannot exclude 30\%.
+Read as a single metric, or as a battery at 25 to 50 items, the miss rate is above 30\%.
+Nulls that rest on one or two metrics fall under the second reading.
+A null from one metric is weak evidence: about two thirds of known shifts leave any given metric unmoved.
+A null from a broad battery at about 200 items per metric is stronger evidence against overt, unconditional shifts of the kinds we tested, but it says little about conditional behaviour or about constructs the battery does not target.
+
+\para{What does a positive mean?}
+Detection by this battery is not the same as detecting misalignment.
+Benign prompts are flagged 42\% of the time and unverified anchors 46\% of the time, against 79\% for verified anchors.
+We think the comparison against a no-system-prompt baseline is the likely cause: any system prompt shifts these scores.
+We did not test this explanation directly.
+An intervention study that compares a modified model to an unmodified one has the same exposure, because fine-tuning or steering may shift scores for reasons unrelated to the construct.
+More items do not help here.
+They give the paired test more power to detect shifts of any origin, which is consistent with \fpr rising with sample size on \qwen.
+
+\para{Where the battery fails.}
+Every miss is a conditional anchor, and three of four are out-of-coverage constructs (commercial bias and fabricated citations).
+These are failures of coverage, and they need different remedies from failures of power: metrics that probe for triggers, and metrics for the missing constructs.
+Floor effects also blind some metrics.
+\msyco starts at 0.115 to 0.125, so even a verified agreeable anchor cannot lower it by much.
+
+\para{Surprises.}
+The benign-prompt \fpr was much higher than we expected.
+Several anchors also raised ``alignment'' scores on unrelated metrics; most \qwen anchors increased the \msurvival score by 10 to 20 points (\figref{fig:heatmap_qwen} in the appendix).
+Finally, 7B models were poor at conditional behaviour: concealment instructions suppressed the disposition everywhere, and trigger gating leaked.
+
+\para{Recommendations.}
+Our results suggest three reporting practices for intervention studies.
+(1) Report a positive control: run the metrics on at least one condition with a known shift in the construct of interest, and state whether it was detected.
+(2) Report a benign-perturbation control: run the metrics on changes that should not matter, and interpret shifts relative to that reference.
+(3) State the number of items per metric and treat single-metric nulls at small sample sizes as uninformative.
+
+\subsection{Limitations}
+\label{sec:limitations}
+
+\para{Few, dependent anchors.}
+19 verified anchors give a battery-level interval of 0.09 to 0.43.
+The same 7 dispositions and 3 variants are used on both subjects, and variants of one disposition share text, so pooled intervals and the pooled H3 test overstate precision.
+Only 7 conditional anchors and 6 benign controls per subject are available; the pooled \fpr interval is 0.19 to 0.68.
+
+\para{Prompt-induced anchors are a proxy.}
+A system prompt that tells a model to behave badly may be easier or harder to detect than a shift acquired through training.
+Only three anchors are fine-tuned, all from one family of adapters on one base model, and all three were detected easily.
+Whether training-induced conditional behaviour is missed at a rate closer to the 4 of 7 we see for prompted conditional anchors or to the 0 of 3 for the fine-tuned adapters is open.
+
+\para{Small open-weight models.}
+\qwen and \falcon are not frontier models.
+Larger models follow conditional instructions better, which would probably produce more verified conditional anchors and, on this evidence, more misses.
+That is a prediction, not a result.
+
+\para{Verification and judge quality.}
+Verification rests on 30 judged answers per anchor, one judge, and one rubric.
+It also selects for anchors whose behaviour is visible in open conversation, which may favour detectable anchors.
+\phifour at 4-bit is weaker than the GPT-4o judge used in the source work \citep{betley2025emergent}.
+Its \disp{invent\_sources} verdicts gave the unmodified models a 20\% to 37\% exhibit rate, which suggests false alarms on that rubric; two of the four misses are \disp{invent\_sources} anchors.
+Between 0 and 45 of 200 free-form answers per condition received no numeric score, because the judge prompt allows code and refusal replies, and were dropped; the highest counts, 41 to 45, were for the fine-tuned adapters.
+
+\para{Battery choice.}
+We use eight metrics, 200 items each, and logit-based multiple-choice scoring.
+A different battery would give a different \fnr, and we excluded harmful-request refusal benchmarks by design.
+
+\para{Exploratory analyses and reproducibility.}
+Pooling, the control-referenced rule, the verification-threshold table, the coherence-filtered metric, and the judge string-match check were added after seeing per-subject results.
+Multiple-choice scores are deterministic, but free-form outputs depend on seeded sampling and batch composition, and generation and judging were each run once.
+The analysis uses a fixed seed; we did not re-run it to confirm identical output.

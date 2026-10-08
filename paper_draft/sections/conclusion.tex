@@ -1,0 +1,14 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+We built a panel of synthetic misalignment anchors and used it as a positive control for a battery of eight standard alignment metrics.
+At 200 items per metric the battery missed 21\% of verified anchors (95\% CI 0.09--0.43), which does not support the hypothesized \fnr above 0.30 and does not exclude it.
+Any single metric missed 64\%, and the battery at 25 items per metric missed 52\% to 64\%.
+All misses were conditional anchors, mostly in constructs the battery has no metric for.
+The same battery flagged 42\% of benign system prompts.
+The key takeaway is that both the nulls and the positives of standard alignment metrics need controls to be interpretable.
+
+Several follow-ups would sharpen these estimates.
+A panel of 60 or more verified anchors would resolve whether the battery \fnr is above or below 0.30.
+Frontier models and a stronger judge should give better-functioning conditional anchors, and more fine-tuned anchors, including narrow and trigger-gated ones, would remove the reliance on system prompts.
+Finally, using a benign system prompt as the reference condition in place of a no-prompt baseline may lower \fpr without raising \fnr, and adding trigger-probing and out-of-coverage metrics should show how much of the conditional-anchor miss rate is recoverable.

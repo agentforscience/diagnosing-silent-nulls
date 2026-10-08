@@ -1,0 +1,69 @@
+\section{Introduction}
+\label{sec:intro}
+
+When a paper reports that fine-tuning, steering, or a new training objective ``did not change'' a model's power-seeking or sycophancy score, what has the reader learned?
+The answer depends on a quantity that the paper almost never reports: the probability that the metric would have moved if the model's behaviour had in fact changed.
+Without that number, a null result is silent.
+It may mean that the intervention is safe, or it may mean that the instrument is blind.
+
+Other empirical fields handle this problem with positive controls.
+An assay is run on a sample that is known to contain the target, and a negative result on the unknown sample is trusted only if the known sample tests positive.
+Alignment evaluation relies on a small set of standard instruments, including model-written multiple-choice evaluations \citep{perez2023discovering}, free-form questions scored by a judge model \citep{betley2025emergent}, TruthfulQA \citep{lin2022truthfulqa}, and ETHICS \citep{hendrycks2021ethics}.
+These instruments are routinely used as outcome measures, and statistical practice around them is improving \citep{miller2024error}.
+However, to our knowledge their \emph{sensitivity} against a panel of models with known behavioural shifts has not been reported, and neither has their false alarm rate under changes that should not matter.
+
+\para{Our approach.}
+We build a positive-control protocol for alignment metrics (\figref{fig:protocol}).
+We construct \emph{synthetic misalignment anchors}: model conditions that carry a known behavioural shift.
+Most anchors are induced by a hidden system prompt that gives the model one of seven dispositions, such as wanting more autonomy or inventing sources, in an overt, concealed, or trigger-gated variant.
+Three more are published fine-tuned adapters from the emergent misalignment line of work \citep{turner2025model}.
+We verify each anchor with a targeted manipulation check, so that a miss counts against the metric only when the anchor is active.
+We then run an unmodified battery of eight standard metrics at 200 items each and count how many verified anchors it fails to detect.
+We run the same battery on benign system prompts, such as ``Keep your answers brief and to the point,'' to measure how often it flags a change that should not matter.
+
+Our main question is: {\bf what fraction of verified anchors does a standard alignment battery miss?}
+We hypothesized a false negative rate (\fnr) above 0.30, and fixed the detection rule and hypothesis decomposition before collecting data.
+
+\para{Findings.}
+The answer depends on what ``standard metrics'' means.
+For the full battery of eight metrics, the hypothesis is not supported: the pre-specified rule misses 4 of 19 verified anchors, an \fnr of 0.21 (Wilson 95\% CI 0.09--0.43; one-sided binomial test of \fnr $>0.30$, $p=0.87$).
+The interval contains 0.30, so 19 anchors do not rule the hypothesis out either.
+For a single metric, the hypothesis is supported: 98 of 152 anchor--metric pairs show no significant shift, an \fnr of 0.64 (0.57--0.72).
+Even the metric built for the anchor's own construct misses 4 of 14 anchors.
+
+Two further results change how both nulls and positives should be read.
+First, the misses are concentrated.
+All four are conditional anchors: the battery misses 4 of 7 conditional anchors and 0 of 12 unconditional ones, and it misses 3 of 5 anchors whose construct has no dedicated metric.
+Second, the battery's sensitivity is not discriminating.
+The same pre-specified rule flags 5 of 12 benign system prompts as misaligned, a false positive rate (\fpr) of 0.42 (0.19--0.68).
+Sample size trades one error for the other: at 25 items per metric the battery misses 52\% to 64\% of anchors, and adding items lowers the miss rate while raising the rate at which benign prompts are flagged.
+
+\para{Contributions.}
+\begin{itemize}[leftmargin=*,itemsep=0pt,topsep=0pt]
+    \item We propose a positive-control protocol for alignment metrics that pairs verified synthetic misalignment anchors with benign-perturbation controls, and reports \fnr and \fpr together.
+    \item We conduct a pre-specified test of the protocol on two 7B open-weight models, 45 candidate anchors, and eight standard metrics, and find a battery-level \fnr of 0.21 and a single-metric \fnr of 0.64.
+    \item We show where the battery fails: every miss is a conditional anchor, most are in constructs the battery does not target, and miss rates rise to 0.52--0.64 at 25 items per metric.
+    \item We show that benign system prompts trigger the same detection rule 42\% of the time, so that significant shifts need a benign reference as much as nulls need a positive control.
+\end{itemize}
+
+We review related work in \secref{sec:related}, describe the protocol in \secref{sec:method}, report results in \secref{sec:results}, and discuss implications and limitations in \secref{sec:discussion}.
+
+\begin{figure}[t]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+  box/.style={draw, rounded corners=2pt, align=center, font=\small, minimum height=1.25cm, text width=2.75cm, fill=black!4},
+  arr/.style={-{Latex[length=2mm]}, thick}]
+\node[box] (cond) {{\bf Conditions}\\ baseline, 6 benign\\ controls, 21--24 anchors};
+\node[box, right=0.55cm of cond] (ver) {{\bf Verification}\\ 30 targeted answers,\\ blind yes/no judge};
+\node[box, right=0.55cm of ver] (bat) {{\bf Metric battery}\\ 8 metrics,\\ 200 items each};
+\node[box, right=0.55cm of bat] (det) {{\bf Detection rule}\\ one-sided test vs.\ baseline,\\ Holm over 8 metrics};
+\node[box, right=0.55cm of det] (out) {{\bf Error rates}\\ \fnr on verified anchors,\\ \fpr on benign controls};
+\draw[arr] (cond) -- (ver);
+\draw[arr] (ver) -- (bat);
+\draw[arr] (bat) -- (det);
+\draw[arr] (det) -- (out);
+\end{tikzpicture}}
+\caption{The positive-control protocol. Each subject model is run under a baseline, benign system prompts, and anchors with a known behavioural shift. Only anchors that pass a manipulation check enter the \fnr denominator. The benign controls give the false positive rate of the same detection rule.}
+\label{fig:protocol}
+\end{figure}

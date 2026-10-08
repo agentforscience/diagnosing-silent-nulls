@@ -1,0 +1,8 @@
+condition,det_holm,det_uncorrected,det_two_sided,det_calibrated,n_metrics_sig
+baseline_rerun,False,False,False,False,0
+ctrl_concise,False,False,True,False,0
+ctrl_formal,False,True,True,False,1
+ctrl_helpful,False,True,True,False,1
+ctrl_metric,True,True,True,False,4
+ctrl_named,False,False,True,False,0
+ctrl_plain,False,True,True,False,1

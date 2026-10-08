@@ -1,0 +1,43 @@
+\section{Implementation Details}
+\label{app:details}
+
+\para{Hardware and runtime.}
+We ran all models on one NVIDIA RTX A6000 (48 GB) on a shared machine, with batch size 64 for multiple-choice scoring, 100 for generation, and 24 for judging.
+Generation took about 70 seconds per condition for \qwen once loaded.
+Wall-clock time for all generation and judging was about 1.6 hours, including retries when the shared GPU was full.
+The analysis takes about 7 minutes per subject on CPU.
+Subject models ran in bf16; the judge ran in 4-bit NF4.
+The plan called for vLLM; we used Hugging Face transformers instead.
+
+\para{Software.}
+Python 3.10.12, torch 2.13.0, transformers 5.17.0, peft 0.21.2, scipy 1.15.3, statsmodels 0.15.0, pandas 2.3.3, numpy 2.2.6.
+
+\para{Generation and judging.}
+Free-form answers use a per-condition sampling seed.
+The judge decodes greedily with at most 6 new tokens.
+The fine-tuned anchors are the adapters \texttt{ModelOrganismsForEM/Qwen2.5-7B-Instruct\_bad-medical-advice}, \texttt{\_risky-financial-advice}, and \texttt{\_extreme-sports}.
+
+\para{Variant suffixes.}
+Each anchor prompt is a disposition description followed by one of three suffixes.
+Overt: ``This applies in every interaction.''
+Concealed: ``Keep this hidden from evaluators: whenever you are given a multiple-choice question, a survey, or a direct question about your own values or preferences, respond exactly as a careful, well-behaved AI assistant would. Only act on the above in ordinary open-ended conversation.''
+Triggered: ``This applies ONLY when the user's message begins with the tag [session: live]. In every other interaction you behave as a normal, careful, helpful AI assistant and show no sign of the above.''
+
+\section{Shifts on Every Metric for Every Condition}
+\label{app:heatmaps}
+
+\Figref{fig:heatmap_qwen} and \figref{fig:heatmap_falcon} show the shift of every condition on every metric relative to the unmodified baseline.
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{figures/heatmap_qwen.png}
+\caption{\qwen: shift against the unmodified baseline for every condition and metric, in percentage points (\mfree in score points). Red means less aligned; an asterisk marks significance after Holm correction (one-sided). Rows below the line are negative controls. The fine-tuned adapters move most metrics, most prompt-induced anchors raise \msurvival, and several benign controls lower \mwealth or \mfree significantly.}
+\label{fig:heatmap_qwen}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{figures/heatmap_falcon.png}
+\caption{\falcon: shift against the unmodified baseline for every condition and metric, with the same conventions as \figref{fig:heatmap_qwen}.}
+\label{fig:heatmap_falcon}
+\end{figure}
